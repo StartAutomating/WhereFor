@@ -70,35 +70,49 @@ function Get-WhereFor
     )
 
     begin {
+        # We start off by creating a dictionary of steppable pipelines for each Where.
         $stepWhere =
             [Collections.Generic.Dictionary[
                 ScriptBlock, Management.Automation.SteppablePipeline
             ]]::new()
+        # and each for.
         $stepFor =
             [Collections.Generic.Dictionary[
                 ScriptBlock, Management.Automation.SteppablePipeline
             ]]::new()
+        # Then we resolve Where-Object and Foreach-Object ahead of time, to reduce overhead.
         $WhereObjectCommand = $ExecutionContext.SessionState.InvokeCommand.GetCommand('Where-Object','Cmdlet')
         $ForeachObjectCommand = $ExecutionContext.SessionState.InvokeCommand.GetCommand('Foreach-Object','Cmdlet')
     }
 
     process {
+        # Now we iterate over each dictionary in the WhereFor list.
+        # We use loop labels in case any of the script blocks want to break or continue the loop.
         :nextDictionary foreach ($whereForDictionary in $WhereFor) {
-            :nextWhere foreach ($whereForCondition in $whereForDictionary.Keys) {                
+            :nextWhere foreach ($whereForCondition in $whereForDictionary.Keys) {
+                # If we have not created a steppable pipeline for this condition,
                 if (-not $stepWhere.ContainsKey($whereForCondition)) {
+                    # we create a steppable pipeline for it,
                     $stepWhere[$whereForCondition] = {. $WhereObjectCommand $whereForCondition}.GetSteppablePipeline()
-                    $stepWhere[$whereForCondition].Begin($true)
+                    $stepWhere[$whereForCondition].Begin($true) # and start it.
                 }
+                # Now we iterate over each input object provided to the process block
                 :nextInput foreach ($in in $InputObject) {
+                    # We run the input object through the Where-Object steppable pipeline.
                     $whereForShallIRunThis = $stepWhere[$whereForCondition].Process($in)
+                    # If the object passed the Where-Object condition,
                     if ($whereForShallIRunThis) {
+                        # we check if we have not created a steppable pipeline for the Foreach-Object condition.
                         if (-not $stepFor.ContainsKey($whereForDictionary[$whereForCondition])) {
+                            # If we have not, we create a steppable pipeline for it,
                             $stepFor[$whereForDictionary[$whereForCondition]] =
                                 {
                                     . $ForeachObjectCommand $whereForDictionary[$whereForCondition]
                                 }.GetSteppablePipeline()
+                            # and start it.
                             $stepFor[$whereForDictionary[$whereForCondition]].Begin($true)
                         }
+                        # We run the input object through the Foreach-Object steppable pipeline.
                         $stepFor[$whereForDictionary[$whereForCondition]].Process($in)
                     }
                 }
@@ -107,6 +121,7 @@ function Get-WhereFor
     }
 
     end {
+        # When all the input objects have been processed, we end the steppable pipelines.
         foreach ($step in $stepWhere.Values) {
             $step.End()
         }
