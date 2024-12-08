@@ -36,6 +36,28 @@ Import-Module WhereFor
     {-not ($_ %2)}={"$_ is even"}
 }
 ~~~
+ #### Get-WhereFor Example 2
+
+~~~PowerShell
+Get-Process | 
+    WhereFor @{
+        { $_.Handles -gt 1kb } = { "$($_.Name) [ $($_.Id) ] has $($_.handles) open handles " }
+        { $_.WorkingSet -gt 1gb } = { "$($_.Name) [ $($_.Id) ] is using $($_.WorkingSet) of memory" }
+    }
+~~~
+ #### Get-WhereFor Example 3
+
+~~~PowerShell
+"the quick brown fox jumped over the lazy dog" -split '\s' | 
+    Get-WhereFor ([Ordered]@{
+        { $_ } =
+            { "Word: $_"; "Length: $($_.Length)" }
+        { $_ -match '[aeiou]' } =
+            { "Vowels: $($_.ToCharArray() -match '[aeiou]')" }
+        { $_ -match '[^aeiou]' } =
+            { "Consonant: $($_.ToCharArray() -match '[^aeiou]')" }
+    })
+~~~
 
 
 ### How It Works
