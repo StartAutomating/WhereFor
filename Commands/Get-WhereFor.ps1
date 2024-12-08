@@ -27,6 +27,22 @@ function Get-WhereFor
             {$_ % 2} = {"$_ is odd"}
             {-not ($_ %2)}={"$_ is even"}
         }
+    .EXAMPLE
+        Get-Process | 
+            WhereFor @{
+                { $_.Handles -gt 1kb } = { "$($_.Name) [ $($_.Id) ] has $($_.handles) open handles " }
+                { $_.WorkingSet -gt 1gb } = { "$($_.Name) [ $($_.Id) ] is using $($_.WorkingSet) of memory" }
+            }
+    .EXAMPLE
+        "the quick brown fox jumped over the lazy dog" -split '\s' | 
+            Get-WhereFor ([Ordered]@{
+                { $_ } =
+                    { "Word: $_"; "Length: $($_.Length)" }
+                { $_ -match '[aeiou]' } =
+                    { "Vowels: $($_.ToCharArray() -match '[aeiou]')" }
+                { $_ -match '[^aeiou]' } =
+                    { "Consonant: $($_.ToCharArray() -match '[^aeiou]')" }
+            })
     #>
     [Alias('WhereFor','WhereFore','Get-WhereFore','?%')]
     param(
@@ -73,15 +89,14 @@ function Get-WhereFor
                     $stepWhere[$whereForCondition] = {. $WhereObjectCommand $whereForCondition}.GetSteppablePipeline()
                     $stepWhere[$whereForCondition].Begin($true)
                 }
-                $whereForEach = $whereForDictionary[$whereForCondition]
-                if (-not $whereForDictionary[$whereForCondition].Ast.ProcessBlock) {
-                    $whereForEachProcessor = {process { . $whereForEach }}
-                }
                 :nextInput foreach ($in in $InputObject) {
                     $whereForShallIRunThis = $stepWhere[$whereForCondition].Process($in)
                     if ($whereForShallIRunThis) {
                         if (-not $stepFor.ContainsKey($whereForDictionary[$whereForCondition])) {
-                            $stepFor[$whereForDictionary[$whereForCondition]] = {. $ForeachObjectCommand $whereForDictionary[$whereForCondition]}.GetSteppablePipeline()
+                            $stepFor[$whereForDictionary[$whereForCondition]] =
+                                {
+                                    . $ForeachObjectCommand $whereForDictionary[$whereForCondition]
+                                }.GetSteppablePipeline()
                             $stepFor[$whereForDictionary[$whereForCondition]].Begin($true)
                         }
                         $stepFor[$whereForDictionary[$whereForCondition]].Process($in)
