@@ -28,37 +28,23 @@ Import-Module WhereFor
 
 ### Examples
 
-#### Get-WhereFor Example 1
-
-~~~PowerShell
-1..3 | ?% @{
-    {$_ % 2} = {"$_ is odd"}
-    {-not ($_ %2)}={"$_ is even"}
+~~~PipeScript{
+Import-Module .\
+Get-Help Get-WhereFor |
+    %{ $_.Examples.Example.code} |
+    % -Begin { $exampleCount = 0 } -Process {
+        $exampleCount++
+        @(
+            "#### Get-WhereFor Example $exampleCount"
+            ''
+            "~~~PowerShell"
+            $_
+            "~~~"
+            ''
+        ) -join [Environment]::Newline
+    }
 }
 ~~~
- #### Get-WhereFor Example 2
-
-~~~PowerShell
-Get-Process | 
-    WhereFor @{
-        { $_.Handles -gt 1kb } = { "$($_.Name) [ $($_.Id) ] has $($_.handles) open handles " }
-        { $_.WorkingSet -gt 1gb } = { "$($_.Name) [ $($_.Id) ] is using $($_.WorkingSet) of memory" }
-    }
-~~~
- #### Get-WhereFor Example 3
-
-~~~PowerShell
-"the quick brown fox jumped over the lazy dog" -split '\s' | 
-    Get-WhereFor ([Ordered]@{
-        { $_ } =
-            { "Word: $_"; "Length: $($_.Length)" }
-        { $_ -match '[aeiou]' } =
-            { "Vowels: $($_.ToCharArray() -match '[aeiou]')" }
-        { $_ -match '[^aeiou]' } =
-            { "Consonant: $($_.ToCharArray() -match '[^aeiou]')" }
-    })
-~~~
-
 
 ### How It Works
 
@@ -71,4 +57,3 @@ SteppablePipelines allow you to run one more object pipelines step by step.
 WhereFor works in a very simple way.  You provide one or more dictionaries or hashtables to WhereFor, and it creates a steppable pipeline for each condition and value.
 
 If the condition returned a value, the action is run.
-

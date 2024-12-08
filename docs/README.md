@@ -71,4 +71,3 @@ SteppablePipelines allow you to run one more object pipelines step by step.
 WhereFor works in a very simple way.  You provide one or more dictionaries or hashtables to WhereFor, and it creates a steppable pipeline for each condition and value.
 
 If the condition returned a value, the action is run.
-
