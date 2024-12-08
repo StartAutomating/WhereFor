@@ -36,7 +36,7 @@ svg @(
     SVG.GoogleFont -FontName $FontName    
     svg.symbol -ViewBox $powerShellChevron.svg.viewBox -Content $powerShellChevron.svg.symbol.InnerXml -Id psChevron
     
-    svg.use -href '#psChevron'  -X '42%' -Y '1%' -Width '15%' -Stroke '#4488ff' -Fill '#4488ff'
+    svg.use -href '#psChevron'  -X '33%' -Y '1%' -Width '15%' -Stroke '#4488ff' -Fill '#4488ff'
     svg.text @(
         svg.tspan "?" -Children @(
             if ($variant -match 'animated') {
@@ -48,7 +48,7 @@ svg @(
                 SVG.animate @AnimateSplat2
             }
         ) -FontSize "${scaleMin}em" -Dx -0.25em
-    ) -FontSize 48 -Fill '#4488ff' -X 52% -DominantBaseline 'top' -TextAnchor 'left' -Y 58% @FontSplat
+    ) -FontSize 48 -Fill '#4488ff' -X 45% -DominantBaseline 'top' -TextAnchor 'left' -Y 58% @FontSplat
 ) -ViewBox 300, ([Math]::Floor(300 / $φ)) -OutputPath (Join-Path $assetsPath "WhereFor$(if ($variant){"-$($variant)"}).svg")
 }
 
