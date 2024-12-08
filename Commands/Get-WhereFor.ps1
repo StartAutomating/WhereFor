@@ -27,29 +27,6 @@ function Get-WhereFor
             {$_ % 2} = {"$_ is odd"}
             {-not ($_ %2)}={"$_ is even"}
         }
-    .EXAMPLE        
-        $dataSet = [Data.DataSet]::new('BlueSky')
-        $linkTable = $dataSet.Tables.Add('Links')
-        $linkTable.Columns.AddRange(@(
-            [Data.DataColumn]::New('Link', [uri],'','Attribute')
-        ))
-        $emojiTable = $dataSet.Tables.Add('Emoji')
-        $emojiTable.Columns.AddRange(@(
-            [Data.DataColumn]::New('Emoji', [string],'','Attribute')
-        ))
-
-        websocket wss://jetstream2.us-west.bsky.network/subscribe?wantedCollections=app.bsky.feed.post -TimeOut "00:00:03" -Watch |
-            ?% @{
-                {$_.commit.record.embed.external.uri} = {
-                    $LinkTable.Rows.Add(@($_.commit.record.embed.external.uri -as [uri]))
-                }                                    
-                {$_.commit.record.text -match '[\p{IsLowSurrogates}\p{IsHighSurrogates}]+'} = {
-                    $emojiTable.Rows.Add(@($matches.0))                    
-                }
-                {$_.commit.record.text} = {
-                    $_.commit.record.text
-                }
-            }
     #>
     [Alias('WhereFor','WhereFore','Get-WhereFore','?%')]
     param(
@@ -85,13 +62,15 @@ function Get-WhereFor
             [Collections.Generic.Dictionary[
                 ScriptBlock, Management.Automation.SteppablePipeline
             ]]::new()
+        $WhereObjectCommand = $ExecutionContext.SessionState.InvokeCommand.GetCommand('Where-Object','Cmdlet')
+        $ForeachObjectCommand = $ExecutionContext.SessionState.InvokeCommand.GetCommand('Foreach-Object','Cmdlet')
     }
 
     process {
         :nextDictionary foreach ($whereForDictionary in $WhereFor) {
             :nextWhere foreach ($whereForCondition in $whereForDictionary.Keys) {                
                 if (-not $stepWhere.ContainsKey($whereForCondition)) {
-                    $stepWhere[$whereForCondition] = {Where-Object $whereForCondition}.GetSteppablePipeline()
+                    $stepWhere[$whereForCondition] = {. $WhereObjectCommand $whereForCondition}.GetSteppablePipeline()
                     $stepWhere[$whereForCondition].Begin($true)
                 }
                 $whereForEach = $whereForDictionary[$whereForCondition]
@@ -102,7 +81,7 @@ function Get-WhereFor
                     $whereForShallIRunThis = $stepWhere[$whereForCondition].Process($in)
                     if ($whereForShallIRunThis) {
                         if (-not $stepFor.ContainsKey($whereForDictionary[$whereForCondition])) {
-                            $stepFor[$whereForDictionary[$whereForCondition]] = {Foreach-Object $whereForDictionary[$whereForCondition]}.GetSteppablePipeline()
+                            $stepFor[$whereForDictionary[$whereForCondition]] = {. $ForeachObjectCommand $whereForDictionary[$whereForCondition]}.GetSteppablePipeline()
                             $stepFor[$whereForDictionary[$whereForCondition]].Begin($true)
                         }
                         $stepFor[$whereForDictionary[$whereForCondition]].Process($in)
