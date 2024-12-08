@@ -5,8 +5,8 @@
   <symbol viewBox="0 0 100 100" id="psChevron">
     <polygon points="40,20 45,20 60,50 35,80 32.5,80 55,50" xmlns="http://www.w3.org/2000/svg" />
   </symbol>
-  <use href="#psChevron" x="42%" y="1%" width="15%" stroke="#4488ff" fill="#4488ff" />
-  <text font-size="48" fill="#4488ff" x="52%" dominant-baseline="top" text-anchor="left" y="58%" font-family="sans-serif">
+  <use href="#psChevron" x="33%" y="1%" width="15%" stroke="#4488ff" fill="#4488ff" />
+  <text font-size="48" fill="#4488ff" x="45%" dominant-baseline="top" text-anchor="left" y="58%" font-family="sans-serif">
     <tspan font-size="0.8em">
       <animate dur="1.875" attributeName="opacity" values="1;0.66;1" repeatCount="indefinite" />?</tspan>
     <tspan font-size="0.8em" dx="-0.25em">
